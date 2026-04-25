@@ -1,4 +1,4 @@
-# 🖼️ Image Captioning using CNN + RNN (LSTM)
+#  Image Captioning using CNN + RNN (LSTM)
 ### A Deep Learning Lab — Flickr8k Dataset
 
 > *Teaching a machine to look at a photo and describe it in plain English — one word at a time.*
@@ -49,48 +49,6 @@ At inference time, the model predicts a probability distribution over the vocabu
 
 ### 7. **Data Generators Are Essential for Large Datasets**
 Loading all 8,000 images into RAM simultaneously would crash most machines. I learned to write a **Python generator** that yields one batch at a time, allowing training on datasets far larger than available memory.
-
----
-
-## 🆕 New Concepts I Worked On
-
-These are concepts I had **not encountered before** this lab — things that genuinely surprised or challenged me:
-
-### 🔷 Multimodal Fusion (Merge Architecture)
-Most neural networks take one type of input. This model takes **two completely different inputs** simultaneously — an image feature vector AND a text sequence — and **fuses** them together using an element-wise `Add` layer. This is called a *merge architecture*. The key insight is that the image feature is added to the LSTM output at every single time step, so the model is **always reminded of what it is looking at** when deciding which word to generate next.
-
-```
-Image Feature ──→ Dense(512) ──→ ╗
-                                  ADD ──→ LayerNorm ──→ Dense ──→ softmax
-Partial Text  ──→ LSTM(512)  ──→ ╝
-```
-
-### 🔷 Sequence-to-Sequence Thinking
-I had to rewire how I think about supervised learning. In traditional classification, one input maps to one label. Here, **one image maps to a variable-length sequence of words**. The model must learn to:
-1. Start from `<start>` token
-2. Predict each word given all previous words + the image
-3. Know when to stop (predict `<end>` token)
-
-This is a fundamentally different problem structure than classification.
-
-### 🔷 Tokenization & Vocabulary Management
-Raw text cannot go into a neural network. I learned how to:
-- Build a **vocabulary** from the training corpus (top 5,000 words)
-- Convert words to integer indices using a **Tokenizer**
-- Handle out-of-vocabulary words with a special `<unk>` token
-- Use **padding** (`pad_sequences`) to make all input sequences the same length
-
-### 🔷 CNN as a Feature Extractor (Not a Classifier)
-I had used CNNs for image classification before. This was the first time I used a CNN **without its classification head**. By setting `include_top=False, pooling='avg'`, MobileNetV2 returns a **1280-dimensional vector** that encodes everything it "sees" in the image — not a class label, but a rich semantic representation.
-
-### 🔷 Layer Normalization in NLP Models
-I added `LayerNormalization` after the merge step. This is different from BatchNormalization. LayerNorm normalises across the *features of a single sample* (not across a batch), which works better in sequence models because batch sizes during text generation can be just 1. I learned *why* normalisation helps here — it smooths the loss landscape and makes training converge faster.
-
-### 🔷 Caching Computed Features to Disk
-Running MobileNetV2 on 8,000 images takes several minutes. Re-doing this every time the training script restarts would be wasteful. I implemented **pickle-based feature caching** — compute once, save to `.pkl`, load on subsequent runs. This taught me about the real-world engineering habit of *caching expensive computations*.
-
-### 🔷 BLEU Score Interpretation
-BLEU-1 measures unigram (single-word) overlap. BLEU-4 measures 4-gram overlap (groups of 4 consecutive words). A BLEU-4 score above 0.20 is generally considered decent for image captioning on Flickr8k. I learned that human captions typically score around 0.68 BLEU-1 against each other, which puts machine performance in context.
 
 ---
 
